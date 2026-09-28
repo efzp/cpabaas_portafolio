@@ -13,6 +13,8 @@ __pycache__/
 .venv/
 venv/
 env/
+.python_packages/
+.azurefunctions/
 .python-version
 .pytest_cache/
 .mypy_cache/
@@ -26,6 +28,9 @@ dist/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Azure Functions local settings
+local.settings.json
 
 # R and RStudio
 .Rhistory
@@ -55,4 +60,3 @@ Desktop.ini
 
 # Microsoft Office temporary files
 ~$*
-

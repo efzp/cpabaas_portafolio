@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "USE_LOCAL_EMULATOR_OR_CONFIGURE",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "SQL_CONNECTION_STRING": "CONFIGURE_WITH_MANAGED_IDENTITY",
+    "BVC_MGC_PAGE_URL": "CONFIGURE_LOCALLY",
+    "BVC_MGC_FILE_URL": "CONFIGURE_LOCALLY",
+    "TIMER_SCHEDULE": "0 0 11 1 * *"
+  }
+}
