@@ -183,6 +183,22 @@ def _exchange_score(instrument, quote, symbol_reason):
     return 0.0, False
 
 
+def _is_exact_bvc_symbol(instrument, quote):
+    ticker = str(instrument.get("TickerNegociacion") or "").strip().upper()
+    provider_symbol = str(quote.get("symbol") or "").strip().upper()
+    exchange_values = {
+        canonical_text(quote.get("exchange")),
+        canonical_text(quote.get("exchangeDisplay")),
+    }
+    return (
+        bool(ticker)
+        and provider_symbol.endswith(".CL")
+        and provider_symbol[:-3] == ticker
+        and "BVC" in exchange_values
+        and quote.get("quoteType") == "EQUITY"
+    )
+
+
 def score_candidate(instrument, quote, query_plan):
     candidate_symbol = canonical_symbol(quote.get("symbol"))
     matched_spec = None
@@ -204,7 +220,8 @@ def score_candidate(instrument, quote, query_plan):
     type_score = 0.05 if quote.get("quoteType") == "EQUITY" else 0.02
     score = round(min(symbol_score + name_score + exchange_score + type_score, 1.0), 5)
 
-    strong_identity = symbol_reason in {
+    local_symbol_match = _is_exact_bvc_symbol(instrument, quote)
+    strong_identity = local_symbol_match or symbol_reason in {
         "TICKER_SUBYACENTE",
         "REGLA_NEGOCIO",
     } or similarity >= 0.80
@@ -220,6 +237,7 @@ def score_candidate(instrument, quote, query_plan):
             "exchangeMatch": exchange_match,
             "exchangeScore": exchange_score,
             "typeScore": type_score,
+            "localSymbolMatch": local_symbol_match,
         },
     }
 
@@ -301,6 +319,12 @@ def match_instrument(
     ):
         decision = "VALIDADO"
         reason = override["reason"]
+    elif _is_exact_bvc_symbol(instrument, top_candidate):
+        decision = "VALIDADO"
+        reason = (
+            "El símbolo de Yahoo coincide exactamente con el ticker de "
+            "negociación al retirar el sufijo BVC .CL."
+        )
     elif forced_review_reason:
         decision = "REVISAR"
         reason = forced_review_reason

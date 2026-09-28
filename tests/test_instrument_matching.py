@@ -153,6 +153,29 @@ class InstrumentMatchingTests(unittest.TestCase):
         self.assertEqual(["CIBEST.CL"], result["queries"])
         self.assertIn("regla de negocio", result["reason"])
 
+    def test_validates_exact_bvc_symbol_after_removing_cl_suffix(self):
+        instrument = make_instrument(
+            InstrumentoID=24,
+            NombreInstrumento="ECOPETROL",
+            TickerNegociacion="ECOPETROL",
+        )
+        client = FakeClient(
+            {
+                "ECOPETROL.CL": [
+                    make_quote("ECOPETROL.CL", "Ecopetrol S.A.", "BVC")
+                ]
+            }
+        )
+
+        result = match_instrument(instrument, client)
+
+        self.assertEqual("VALIDADO", result["decision"])
+        self.assertEqual("ECOPETROL.CL", result["topCandidate"]["symbol"])
+        self.assertTrue(
+            result["topCandidate"]["evidence"]["localSymbolMatch"]
+        )
+        self.assertIn("sufijo BVC .CL", result["reason"])
+
     def test_marks_close_candidates_as_ambiguous(self):
         instrument = make_instrument(
             NombreInstrumento="Alpha Corporation",
@@ -162,7 +185,7 @@ class InstrumentMatchingTests(unittest.TestCase):
             {
                 "ABC": [
                     make_quote("ABC", "Alpha Corporation", "NYSE"),
-                    make_quote("ABC.CL", "Alpha Corporation", "BVC"),
+                    make_quote("ABC.CL", "Alpha Corporation", "NYSE"),
                 ]
             }
         )
@@ -170,11 +193,14 @@ class InstrumentMatchingTests(unittest.TestCase):
         result = match_instrument(
             instrument,
             client,
-            automatic_threshold=0.85,
+            automatic_threshold=0.70,
             ambiguity_margin=0.16,
         )
 
         self.assertEqual("REVISAR", result["decision"])
+        self.assertFalse(
+            result["topCandidate"]["evidence"]["localSymbolMatch"]
+        )
         self.assertIn("ambigua", result["reason"])
 
     def test_returns_no_match_when_provider_has_no_candidates(self):
