@@ -64,9 +64,10 @@ La ejecución posterior a aplicar la regla BVC y el fallback directo produjo 1
 proveedor ni escrituras. `PEI` no generó consultas, `PFBCOLOM` solo consultó
 `CIBEST.CL` y GOOGL se validó mediante la coincidencia directa `GOOGL`.
 
-## Permiso pendiente
+## Permiso de ejecución
 
-La identidad administrada de la Function aún no tiene `EXECUTE` sobre
-`dbo.sp_InstrumentosPendientesFuente`. El endpoint puede desplegarse y las
-pruebas pueden ejecutarse, pero no funcionará en Azure hasta crear el rol de
-enriquecimiento de mínimo privilegio previsto en el siguiente paso.
+La identidad administrada de la Function pertenece al rol
+`instrument_enrichment_loader`. El rol tiene `EXECUTE` sobre
+`dbo.sp_InstrumentosPendientesFuente` y `dbo.sp_UpsertInstrumentoFuente`, sin
+roles amplios ni permisos directos adicionales sobre las tablas de
+enriquecimiento.

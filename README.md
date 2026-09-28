@@ -19,7 +19,8 @@ integridad del código recuperado están registradas en
 objetos críticos de Azure SQL se encuentra en [sql/README.md](sql/README.md).
 
 > Importante: el cargador recuperado fue modularizado, probado y desplegado
-> mediante GitHub Actions. No incorpora todavía enriquecimiento financiero.
+> mediante GitHub Actions. El matching de símbolos ya está implementado; la
+> carga de fundamentales aún no se ha desarrollado.
 
 ## Estructura del código
 
@@ -44,6 +45,14 @@ los disparadores recuperados del despliegue.
 El endpoint `POST /api/instrumentos/matching/yahoo/dry-run` propone símbolos de
 Yahoo sin escribir en SQL. Su diseño, criterios y primera ejecución están en
 [docs/YAHOO_MATCHING_DRY_RUN.md](docs/YAHOO_MATCHING_DRY_RUN.md).
+
+## Aplicación del matching Yahoo
+
+El endpoint `POST /api/instrumentos/matching/yahoo/apply` persiste únicamente
+matches aceptados mediante el procedimiento almacenado autorizado. Exige el
+cuerpo JSON `{"confirm": true}`. Su contrato, seguridad y comportamiento
+transaccional están documentados en
+[docs/YAHOO_MATCHING_APPLY.md](docs/YAHOO_MATCHING_APPLY.md).
 
 ## Pruebas
 

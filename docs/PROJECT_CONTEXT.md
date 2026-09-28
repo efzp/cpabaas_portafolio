@@ -95,6 +95,9 @@ controlada del matching Yahoo. Sus disparadores son:
 - `YahooMatchingDryRun`: HTTP POST con autenticación de nivel Function y ruta
   `instrumentos/matching/yahoo/dry-run`; produce candidatos auditables sin
   escribir en SQL.
+- `YahooMatchingApply`: HTTP POST con autenticación de nivel Function y ruta
+  `instrumentos/matching/yahoo/apply`; exige `{"confirm": true}` y persiste
+  solo matches aceptados mediante el procedimiento autorizado.
 
 El código descarga un XLSX, normaliza y valida sus filas, usa staging, controla
 duplicados por SHA-256, detecta caídas superiores al 20 %, actualiza el catálogo
@@ -126,6 +129,11 @@ GOOGL quedó `VALIDADO` mediante el fallback de coincidencia directa. El
 resultado total fue 1 `AUTOMATICO`, 9 `VALIDADO`, 1 `EXCLUIDO` y 0 `REVISAR`.
 No hubo errores del proveedor ni escrituras. El detalle está en
 `YAHOO_MATCHING_DRY_RUN.md`.
+
+La aplicación controlada del matching se implementó con confirmación explícita,
+transacción, rollback y errores sanitizados. El despliegue no ejecuta el
+endpoint: `InstrumentoFuente` permanece sin filas hasta autorizar la primera
+aplicación manual. El contrato está en `YAHOO_MATCHING_APPLY.md`.
 
 ## Modelo SQL y avance
 
@@ -173,13 +181,11 @@ Actualmente pertenece al rol `bvc_mgc_loader`, limitado a `SELECT`, `INSERT` y
 - `dbo.BvcMgcValorStage`.
 - `dbo.BvcMgcValor`.
 
-No tiene todavía `EXECUTE` sobre los procedimientos de enriquecimiento. No se
-deben asignar `db_owner`, `db_datareader` ni `db_datawriter`.
-
-Por esa razón, el endpoint `YahooMatchingDryRun` no puede ejecutarse todavía
-con la identidad de la Function en Azure, aunque el código y sus pruebas estén
-desplegados. El próximo cambio de seguridad debe limitarse a `EXECUTE` sobre
-`sp_InstrumentosPendientesFuente`; la escritura seguirá deshabilitada.
+También pertenece a `instrument_enrichment_loader`, que tiene exclusivamente
+`EXECUTE` sobre `sp_InstrumentosPendientesFuente` y
+`sp_UpsertInstrumentoFuente`. Los permisos fueron verificados en Azure SQL el
+28 de septiembre de 2026. No se deben asignar `db_owner`, `db_datareader` ni
+`db_datawriter`.
 
 ## Decisiones y restricciones
 
@@ -239,14 +245,16 @@ Orden recomendado:
 4. ~~Implementar el servicio de matching Yahoo en modo `dry-run` usando
    `sp_InstrumentosPendientesFuente`.~~ Completado el 28 de septiembre de 2026.
 5. ~~Añadir pruebas para canonización, generación de candidatos, scoring,
-   ambigüedad y casos PEI/PFBCOLOM.~~ Completado con una suite total de 29
+   ambigüedad y casos PEI/PFBCOLOM.~~ Completado con una suite total de 38
    pruebas.
-6. Revisar manualmente los resultados del `dry-run` para los instrumentos
-   actualmente presentes en `PosicionMensual`.
-7. Crear un rol específico de enriquecimiento y conceder únicamente `EXECUTE`
-   sobre `sp_InstrumentosPendientesFuente` y `sp_UpsertInstrumentoFuente`.
-8. Habilitar la escritura mediante `sp_UpsertInstrumentoFuente` y desplegar un
-   disparador diario independiente del cargador mensual BVC/MGC.
+6. ~~Revisar manualmente los resultados del `dry-run` para los instrumentos
+   actualmente presentes en `PosicionMensual`.~~ Completado.
+7. ~~Crear un rol específico de enriquecimiento y conceder únicamente
+   `EXECUTE` sobre `sp_InstrumentosPendientesFuente` y
+   `sp_UpsertInstrumentoFuente`.~~ Completado y verificado.
+8. Ejecutar por primera vez el endpoint manual `YahooMatchingApply`, validar
+   las 10 relaciones persistidas y luego crear un disparador diario
+   independiente del cargador mensual BVC/MGC.
 9. Solo después de estabilizar los símbolos, implementar los procedimientos y
    la carga mensual de fundamentales.
 

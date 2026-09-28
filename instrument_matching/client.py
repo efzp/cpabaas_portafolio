@@ -49,6 +49,7 @@ class YahooSearchClient:
                     "longName": quote.get("longname"),
                     "exchange": quote.get("exchange"),
                     "exchangeDisplay": quote.get("exchDisp"),
+                    "currency": quote.get("currency"),
                     "quoteType": quote_type,
                     "typeDisplay": quote.get("typeDisp"),
                 }
@@ -58,4 +59,3 @@ class YahooSearchClient:
     def close(self):
         if self._owns_session:
             self.session.close()
-

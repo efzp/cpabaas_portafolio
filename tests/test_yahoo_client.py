@@ -16,6 +16,7 @@ class FakeResponse:
                     "longname": "Patrimonio Autónomo Estrategias Inmobiliarias",
                     "exchange": "BVC",
                     "exchDisp": "BVC",
+                    "currency": "COP",
                     "quoteType": "EQUITY",
                     "typeDisp": "Equity",
                 },
@@ -53,6 +54,7 @@ class YahooClientTests(unittest.TestCase):
 
         self.assertEqual(1, len(result))
         self.assertEqual("PEI.CL", result[0]["symbol"])
+        self.assertEqual("COP", result[0]["currency"])
         _, kwargs = session.calls[0]
         self.assertEqual("PEI", kwargs["params"]["q"])
         self.assertEqual(5, kwargs["params"]["quotesCount"])
@@ -61,4 +63,3 @@ class YahooClientTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

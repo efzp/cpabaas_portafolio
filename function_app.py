@@ -4,7 +4,10 @@ import logging
 import azure.functions as func
 
 from bvc_mgc.service import run_bvc_load
-from instrument_matching.service import run_yahoo_matching_dry_run
+from instrument_matching.service import (
+    run_yahoo_matching_apply,
+    run_yahoo_matching_dry_run,
+)
 
 
 app = func.FunctionApp()
@@ -70,6 +73,56 @@ def yahoo_matching_dry_run(req: func.HttpRequest) -> func.HttpResponse:
                     "status": "ERROR",
                     "mode": "DRY_RUN",
                     "message": "No fue posible ejecutar el matching de instrumentos.",
+                },
+                ensure_ascii=False,
+            ),
+            status_code=500,
+            mimetype="application/json",
+        )
+
+
+@app.function_name(name="YahooMatchingApply")
+@app.route(
+    route="instrumentos/matching/yahoo/apply",
+    methods=["POST"],
+    auth_level=func.AuthLevel.FUNCTION,
+)
+def yahoo_matching_apply(req: func.HttpRequest) -> func.HttpResponse:
+    try:
+        payload = req.get_json()
+    except ValueError:
+        payload = None
+
+    if not isinstance(payload, dict) or payload.get("confirm") is not True:
+        return func.HttpResponse(
+            json.dumps(
+                {
+                    "status": "REJECTED",
+                    "mode": "APPLY",
+                    "message": "Se requiere el cuerpo JSON {\"confirm\": true}.",
+                },
+                ensure_ascii=False,
+            ),
+            status_code=400,
+            mimetype="application/json",
+        )
+
+    try:
+        result = run_yahoo_matching_apply()
+        return func.HttpResponse(
+            json.dumps(result, ensure_ascii=False),
+            status_code=200,
+            mimetype="application/json",
+        )
+    except Exception:
+        logging.exception("Falló la aplicación del matching Yahoo.")
+        return func.HttpResponse(
+            json.dumps(
+                {
+                    "status": "ERROR",
+                    "mode": "APPLY",
+                    "committed": False,
+                    "message": "No fue posible guardar el matching de instrumentos.",
                 },
                 ensure_ascii=False,
             ),

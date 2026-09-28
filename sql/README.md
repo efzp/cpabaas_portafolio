@@ -9,7 +9,7 @@ desde `sqldb-inversiones-cpabaas`, en el servidor
 - Cinco tablas usadas por el cargador BVC/MGC y el enriquecimiento financiero.
 - Los cuatro procedimientos que forman el contrato de validación y matching.
 - La vista mensual consumida por el reporte.
-- El rol de mínimo privilegio usado por la Function actual.
+- Los roles de mínimo privilegio usados por la Function.
 
 Los scripts no contienen datos, credenciales, cadenas de conexión ni secretos.
 Son una línea base del estado desplegado, no una migración que deba ejecutarse
@@ -31,5 +31,5 @@ orden lógico es:
 3. `tables/InstrumentoFuente.sql` e
    `tables/IndicadorEmpresaMensual.sql`, después de `Instrumento` y `Empresa`.
 4. `views/` y `procedures/`, después de todas sus dependencias.
-5. `security/bvc_mgc_loader.sql`.
-
+5. `security/bvc_mgc_loader.sql` y
+   `security/instrument_enrichment_loader.sql`.
