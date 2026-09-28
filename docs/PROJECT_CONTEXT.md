@@ -107,11 +107,12 @@ El despliegue activo fue publicado el 14 de septiembre de 2026. Su código
 fuente fue recuperado e incorporado como línea base el 28 de septiembre de
 2026. La procedencia y los hashes están en `DEPLOYED_BASELINE.md`.
 
-La línea base fue modularizada localmente el 28 de septiembre de 2026. Los
-disparadores permanecen en `function_app.py`; parser, persistencia y servicio
-BVC/MGC están en `bvc_mgc/`, y configuración/conexión en `shared/`. Trece
-pruebas unitarias verifican el comportamiento principal. Esta versión aún no
-ha sido desplegada en Azure.
+La línea base fue modularizada el 28 de septiembre de 2026. Los disparadores
+permanecen en `function_app.py`; parser, persistencia y servicio BVC/MGC están
+en `bvc_mgc/`, y configuración/conexión en `shared/`. Trece pruebas unitarias
+verifican el comportamiento principal. Esta versión fue desplegada con éxito
+en Azure mediante GitHub Actions y OIDC. El workflow también quedó habilitado
+para validar y desplegar cambios enviados a `main`.
 
 ## Modelo SQL y avance
 
@@ -126,6 +127,12 @@ Objetos ya creados que no deben recrearse:
 - `dbo.vw_MovimientoMensual`.
 
 La validación integrada está desplegada y el backfill histórico está completo.
+
+El 28 de septiembre de 2026 se recuperó en modo de solo lectura y se versionó
+en `sql/` la definición desplegada de las cinco tablas críticas del cargador y
+del enriquecimiento, los cuatro procedimientos del contrato de matching y
+validación, `vw_MovimientoMensual` y el rol `bvc_mgc_loader`. Los scripts no
+contienen datos ni credenciales y no fueron ejecutados contra Azure SQL.
 
 Conteos relevantes:
 
@@ -181,8 +188,9 @@ deben asignar `db_owner`, `db_datareader` ni `db_datawriter`.
   regresión con ejemplos anonimizados.
 - El endpoint manual devuelve mensajes de excepción internos y debe responder
   con un error sanitizado.
-- Los paquetes de Power Automate, DDL SQL y código Python aún no tienen una
-  línea base versionada y reproducible.
+- Los paquetes exportados de Power Automate aún no tienen una línea base
+  versionada y reproducible. El código Python y los objetos SQL críticos ya
+  están versionados.
 
 ## Próximo objetivo técnico
 
@@ -195,11 +203,13 @@ Orden recomendado:
 1. ~~Recuperar del paquete desplegado `function_app.py`, `host.json` y
    `requirements.txt`, revisarlos y versionarlos sin secretos.~~ Completado
    el 28 de septiembre de 2026.
-2. Exportar a `sql/` las definiciones vigentes de las tablas, vista y
-   procedimientos usados por el proyecto.
+2. ~~Exportar a `sql/` las definiciones vigentes de las tablas, vista y
+   procedimientos usados por el proyecto.~~ Completado el 28 de septiembre de
+   2026 para los objetos críticos y los permisos del cargador.
 3. ~~Separar acceso SQL, configuración y lógica del cargador BVC/MGC en
    módulos comprobables, conservando su comportamiento.~~ Completado el 28 de
-   septiembre de 2026 con 13 pruebas unitarias.
+   septiembre de 2026 con 13 pruebas unitarias y desplegado mediante GitHub
+   Actions.
 4. Implementar el servicio de matching Yahoo en modo `dry-run` usando
    `sp_InstrumentosPendientesFuente`.
 5. Añadir pruebas para canonización, generación de candidatos, scoring,

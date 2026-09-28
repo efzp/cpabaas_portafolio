@@ -15,10 +15,11 @@ El sistema completo se distribuye entre cuatro capas:
 La arquitectura, el estado verificado y el plan inmediato están documentados
 en [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md). La procedencia e
 integridad del código recuperado están registradas en
-[docs/DEPLOYED_BASELINE.md](docs/DEPLOYED_BASELINE.md).
+[docs/DEPLOYED_BASELINE.md](docs/DEPLOYED_BASELINE.md), y la línea base de los
+objetos críticos de Azure SQL se encuentra en [sql/README.md](sql/README.md).
 
-> Importante: esta línea base reproduce el código recuperado del despliegue. No
-> incorpora todavía enriquecimiento financiero.
+> Importante: el cargador recuperado fue modularizado, probado y desplegado
+> mediante GitHub Actions. No incorpora todavía enriquecimiento financiero.
 
 ## Estructura del código
 
@@ -30,6 +31,8 @@ bvc_mgc/service.py     Orquestación de la carga BVC/MGC
 shared/config.py       Configuración desde variables de entorno
 shared/db.py           Apertura de conexiones SQL
 tests/                 Pruebas unitarias de caracterización
+sql/                   Línea base de los objetos críticos de Azure SQL
+.github/workflows/     Validación y despliegue mediante OIDC
 ```
 
 La modularización conserva los nombres, rutas, programación y respuestas de
