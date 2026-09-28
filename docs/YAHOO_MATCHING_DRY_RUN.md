@@ -30,6 +30,9 @@ Los errores externos se informan por tipo sin exponer mensajes internos.
   Yahoo retirando exclusivamente el sufijo final `.CL`. La coincidencia queda
   `VALIDADO` solo si es exacta, el mercado informado es BVC y el tipo es
   `EQUITY`.
+- Como fallback para los casos restantes, se compara el ticker directamente,
+  sin transformar ni retirar sufijos. Solo una coincidencia exacta de tipo
+  `EQUITY` queda `VALIDADO`.
 - `PFBCOLOM` usa exclusivamente la regla de negocio validada
   `PFBCOLOM -> CIBEST.CL`; no se infiere una regla general desde este caso.
 - `PEI` se marca `EXCLUIDO` antes de consultar Yahoo porque es un vehículo
@@ -52,14 +55,14 @@ realizó únicamente consultas de lectura a SQL y Yahoo.
 | 30 | MSFTCO | MSFTCO.CL | 0.65 | 0.30 | VALIDADO |
 | 39 | PFCIBEST | PFCIBEST.CL | 0.65 | 0.65 | VALIDADO |
 | 40 | ISA | ISA.CL | 0.65 | 0.60 | VALIDADO |
-| 42 | GOOGL | GOOGL | 0.50 | 0.48 | REVISAR |
+| 42 | GOOGL | GOOGL | 0.50 | 0.48 | VALIDADO |
 | 44 | TERPEL | TERPEL.CL | 0.65 | 0.65 | VALIDADO |
 | 46 | PFBCOLOM | CIBEST.CL | 0.90 | 0.90 | VALIDADO |
 
-La ejecución posterior a aplicar la regla BVC produjo 1 `AUTOMATICO`, 8
-`VALIDADO`, 1 `EXCLUIDO` y 1 `REVISAR`. No hubo errores del proveedor ni
-escrituras. `PEI` no generó consultas, `PFBCOLOM` solo consultó `CIBEST.CL` y
-GOOGL es el único resultado que aún requiere validación de negocio.
+La ejecución posterior a aplicar la regla BVC y el fallback directo produjo 1
+`AUTOMATICO`, 9 `VALIDADO`, 1 `EXCLUIDO` y 0 `REVISAR`. No hubo errores del
+proveedor ni escrituras. `PEI` no generó consultas, `PFBCOLOM` solo consultó
+`CIBEST.CL` y GOOGL se validó mediante la coincidencia directa `GOOGL`.
 
 ## Permiso pendiente
 

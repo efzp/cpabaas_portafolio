@@ -176,6 +176,41 @@ class InstrumentMatchingTests(unittest.TestCase):
         )
         self.assertIn("sufijo BVC .CL", result["reason"])
 
+    def test_validates_exact_direct_symbol_as_fallback(self):
+        instrument = make_instrument(
+            InstrumentoID=42,
+            NombreInstrumento="GOOGL",
+            TickerNegociacion="GOOGL",
+        )
+        client = FakeClient(
+            {"GOOGL": [make_quote("GOOGL", "Alphabet Inc.", "NASDAQ")]}
+        )
+
+        result = match_instrument(instrument, client)
+
+        self.assertEqual("VALIDADO", result["decision"])
+        self.assertEqual("GOOGL", result["topCandidate"]["symbol"])
+        self.assertTrue(
+            result["topCandidate"]["evidence"]["directSymbolMatch"]
+        )
+        self.assertIn("sin transformar sufijos", result["reason"])
+
+    def test_direct_fallback_rejects_non_equity(self):
+        instrument = make_instrument(
+            NombreInstrumento="ABC",
+            TickerNegociacion="ABC",
+        )
+        client = FakeClient(
+            {"ABC": [make_quote("ABC", "ABC Fund", "NASDAQ", "MUTUALFUND")]}
+        )
+
+        result = match_instrument(instrument, client)
+
+        self.assertEqual("REVISAR", result["decision"])
+        self.assertFalse(
+            result["topCandidate"]["evidence"]["directSymbolMatch"]
+        )
+
     def test_marks_close_candidates_as_ambiguous(self):
         instrument = make_instrument(
             NombreInstrumento="Alpha Corporation",

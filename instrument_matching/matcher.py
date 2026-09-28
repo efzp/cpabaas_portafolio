@@ -199,6 +199,16 @@ def _is_exact_bvc_symbol(instrument, quote):
     )
 
 
+def _is_exact_direct_symbol(instrument, quote):
+    ticker = str(instrument.get("TickerNegociacion") or "").strip().upper()
+    provider_symbol = str(quote.get("symbol") or "").strip().upper()
+    return (
+        bool(ticker)
+        and provider_symbol == ticker
+        and quote.get("quoteType") == "EQUITY"
+    )
+
+
 def score_candidate(instrument, quote, query_plan):
     candidate_symbol = canonical_symbol(quote.get("symbol"))
     matched_spec = None
@@ -221,10 +231,13 @@ def score_candidate(instrument, quote, query_plan):
     score = round(min(symbol_score + name_score + exchange_score + type_score, 1.0), 5)
 
     local_symbol_match = _is_exact_bvc_symbol(instrument, quote)
-    strong_identity = local_symbol_match or symbol_reason in {
-        "TICKER_SUBYACENTE",
-        "REGLA_NEGOCIO",
-    } or similarity >= 0.80
+    direct_symbol_match = _is_exact_direct_symbol(instrument, quote)
+    strong_identity = (
+        local_symbol_match
+        or direct_symbol_match
+        or symbol_reason in {"TICKER_SUBYACENTE", "REGLA_NEGOCIO"}
+        or similarity >= 0.80
+    )
     return {
         **quote,
         "score": score,
@@ -238,6 +251,7 @@ def score_candidate(instrument, quote, query_plan):
             "exchangeScore": exchange_score,
             "typeScore": type_score,
             "localSymbolMatch": local_symbol_match,
+            "directSymbolMatch": direct_symbol_match,
         },
     }
 
@@ -324,6 +338,12 @@ def match_instrument(
         reason = (
             "El símbolo de Yahoo coincide exactamente con el ticker de "
             "negociación al retirar el sufijo BVC .CL."
+        )
+    elif _is_exact_direct_symbol(instrument, top_candidate):
+        decision = "VALIDADO"
+        reason = (
+            "El fallback confirmó que el símbolo de Yahoo coincide "
+            "exactamente con el ticker de negociación, sin transformar sufijos."
         )
     elif forced_review_reason:
         decision = "REVISAR"

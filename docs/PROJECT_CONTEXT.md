@@ -122,8 +122,10 @@ La ejecución de lectura evaluó 11 instrumentos: BRKB obtuvo propuesta
 automática `BRK-B`; ocho quedaron `VALIDADO`, incluidos los símbolos BVC que
 coinciden exactamente al retirar `.CL` y la regla particular
 `PFBCOLOM -> CIBEST.CL`; PEI quedó `EXCLUIDO` sin consultar al proveedor; y
-solo GOOGL quedó en `REVISAR`. No hubo errores del proveedor ni escrituras. El
-detalle está en `YAHOO_MATCHING_DRY_RUN.md`.
+GOOGL quedó `VALIDADO` mediante el fallback de coincidencia directa. El
+resultado total fue 1 `AUTOMATICO`, 9 `VALIDADO`, 1 `EXCLUIDO` y 0 `REVISAR`.
+No hubo errores del proveedor ni escrituras. El detalle está en
+`YAHOO_MATCHING_DRY_RUN.md`.
 
 ## Modelo SQL y avance
 
@@ -191,6 +193,8 @@ desplegados. El próximo cambio de seguridad debe limitarse a `EXECUTE` sobre
   debe generalizar como heurística para otros símbolos históricos.
 - Un símbolo Yahoo se valida como BVC al retirar `.CL` solo cuando coincide
   exactamente con `TickerNegociacion`, el mercado es BVC y el tipo es `EQUITY`.
+- Los casos restantes usan un fallback sin transformar sufijos: el símbolo
+  debe coincidir exactamente con `TickerNegociacion` y ser de tipo `EQUITY`.
 - PEI se excluye del matching empresarial porque no es una empresa.
 - PFCIBEST permanece como instrumento independiente y se valida como
   `PFCIBEST.CL`.
@@ -235,7 +239,7 @@ Orden recomendado:
 4. ~~Implementar el servicio de matching Yahoo en modo `dry-run` usando
    `sp_InstrumentosPendientesFuente`.~~ Completado el 28 de septiembre de 2026.
 5. ~~Añadir pruebas para canonización, generación de candidatos, scoring,
-   ambigüedad y casos PEI/PFBCOLOM.~~ Completado con una suite total de 26
+   ambigüedad y casos PEI/PFBCOLOM.~~ Completado con una suite total de 29
    pruebas.
 6. Revisar manualmente los resultados del `dry-run` para los instrumentos
    actualmente presentes en `PosicionMensual`.
