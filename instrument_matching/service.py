@@ -42,6 +42,8 @@ def run_yahoo_matching_dry_run(settings=None, client=None):
             "total": len(results),
             "summary": {
                 "automatico": counts.get("AUTOMATICO", 0),
+                "validado": counts.get("VALIDADO", 0),
+                "excluido": counts.get("EXCLUIDO", 0),
                 "revisar": counts.get("REVISAR", 0),
                 "sinMatch": counts.get("SIN_MATCH", 0),
                 "error": counts.get("ERROR", 0),
@@ -53,4 +55,3 @@ def run_yahoo_matching_dry_run(settings=None, client=None):
             connection.close()
         if owned_client:
             client.close()
-

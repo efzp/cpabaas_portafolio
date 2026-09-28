@@ -118,9 +118,11 @@ en Azure mediante GitHub Actions y OIDC. El workflow también quedó habilitado
 para validar y desplegar cambios enviados a `main`.
 
 El matching Yahoo en modo `dry-run` se implementó el 28 de septiembre de 2026.
-La primera ejecución de lectura evaluó 11 instrumentos: BRKB obtuvo propuesta
-automática `BRK-B`, y los otros 10 quedaron en `REVISAR`. No hubo errores del
-proveedor ni escrituras. El detalle está en `YAHOO_MATCHING_DRY_RUN.md`.
+La ejecución de lectura evaluó 11 instrumentos: BRKB obtuvo propuesta
+automática `BRK-B`; la regla particular `PFBCOLOM -> CIBEST.CL` quedó
+`VALIDADO`; PEI quedó `EXCLUIDO` sin consultar al proveedor; y los otros 8
+quedaron en `REVISAR`. No hubo errores del proveedor ni escrituras. El detalle
+está en `YAHOO_MATCHING_DRY_RUN.md`.
 
 ## Modelo SQL y avance
 
@@ -184,7 +186,10 @@ desplegados. El próximo cambio de seguridad debe limitarse a `EXECUTE` sobre
 - No crear instrumentos arbitrariamente desde la Function.
 - Usar procedimientos almacenados como contrato de lectura y escritura.
 - El matching debe ser conservador; los casos ambiguos terminan en `REVISAR`.
-- PEI y símbolos históricos como PFBCOLOM requieren tratamiento especial.
+- La correspondencia particular `PFBCOLOM -> CIBEST.CL` está validada; no se
+  debe generalizar como heurística para otros símbolos históricos.
+- PEI se excluye del matching empresarial porque no es una empresa.
+- PFCIBEST permanece como instrumento independiente sujeto a revisión.
 - Los fundamentales se cargan mensualmente solo para instrumentos presentes en
   el cierre.
 - No desarrollar todavía `DecisionInversion`; primero deben completarse los

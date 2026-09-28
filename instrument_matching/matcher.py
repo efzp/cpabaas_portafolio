@@ -18,18 +18,26 @@ CORPORATE_STOPWORDS = {
 }
 
 SPECIAL_REVIEW_TICKERS = {
-    "PEI": "PEI es ambiguo fuera de la BVC y requiere validación humana.",
-    "PFBCOLOM": (
-        "PFBCOLOM es un símbolo histórico; debe validarse frente a PFCIBEST."
-    ),
     "PFCIBEST": (
         "PFCIBEST participa en un cambio histórico de símbolo y requiere revisión."
     ),
 }
 
-SPECIAL_QUERY_ALIASES = {
-    "PFBCOLOM": ("PFCIBEST", "CIB"),
-    "PFCIBEST": ("PFBCOLOM", "CIB"),
+EXCLUDED_TICKERS = {
+    "PEI": (
+        "PEI es un vehículo inmobiliario y no una empresa; se excluye del "
+        "matching empresarial."
+    ),
+}
+
+BUSINESS_SYMBOL_OVERRIDES = {
+    "PFBCOLOM": {
+        "providerSymbol": "CIBEST.CL",
+        "reason": (
+            "PFBCOLOM corresponde actualmente a CIBEST; regla de negocio "
+            "validada."
+        ),
+    },
 }
 
 MARKET_ALIASES = {
@@ -96,6 +104,16 @@ def build_query_plan(instrument):
     underlying = str(instrument.get("TickerSubyacente") or "").strip().upper()
     specs = []
 
+    override = BUSINESS_SYMBOL_OVERRIDES.get(ticker)
+    if override:
+        return [
+            QuerySpec(
+                override["providerSymbol"],
+                "REGLA_NEGOCIO",
+                0.85,
+            )
+        ]
+
     if underlying:
         _add_query(
             specs,
@@ -111,9 +129,6 @@ def build_query_plan(instrument):
 
     if ticker.endswith("CO") and len(ticker) > 4:
         _add_query(specs, ticker[:-2], "HEURISTICA_MGC_CO", 0.30)
-
-    for alias in SPECIAL_QUERY_ALIASES.get(ticker, ()):
-        _add_query(specs, alias, "ALIAS_HISTORICO", 0.20)
 
     for name in _meaningful_names(instrument):
         _add_query(specs, name, "NOMBRE", 0.0)
@@ -189,9 +204,10 @@ def score_candidate(instrument, quote, query_plan):
     type_score = 0.05 if quote.get("quoteType") == "EQUITY" else 0.02
     score = round(min(symbol_score + name_score + exchange_score + type_score, 1.0), 5)
 
-    strong_identity = (
-        symbol_reason == "TICKER_SUBYACENTE" or similarity >= 0.80
-    )
+    strong_identity = symbol_reason in {
+        "TICKER_SUBYACENTE",
+        "REGLA_NEGOCIO",
+    } or similarity >= 0.80
     return {
         **quote,
         "score": score,
@@ -238,13 +254,31 @@ def match_instrument(
     automatic_threshold=0.85,
     ambiguity_margin=0.15,
 ):
+    ticker = str(instrument.get("TickerNegociacion") or "").strip().upper()
+    excluded_reason = EXCLUDED_TICKERS.get(ticker)
+    if excluded_reason:
+        return {
+            "instrumentoId": instrument.get("InstrumentoID"),
+            "tickerNegociacion": instrument.get("TickerNegociacion"),
+            "tickerSubyacente": instrument.get("TickerSubyacente"),
+            "nombreInstrumento": instrument.get("NombreInstrumento"),
+            "nombreEmpresa": instrument.get("NombreEmpresa"),
+            "decision": "EXCLUIDO",
+            "reason": excluded_reason,
+            "scoreMargin": 0.0,
+            "queries": [],
+            "topCandidate": None,
+            "candidates": [],
+            "providerErrors": [],
+        }
+
     query_plan = build_query_plan(instrument)
     quotes, provider_errors = _collect_quotes(client, query_plan, max_results)
     candidates = [score_candidate(instrument, quote, query_plan) for quote in quotes]
     candidates.sort(key=lambda candidate: (-candidate["score"], candidate["symbol"]))
     candidates = candidates[:5]
 
-    ticker = str(instrument.get("TickerNegociacion") or "").strip().upper()
+    override = BUSINESS_SYMBOL_OVERRIDES.get(ticker)
     forced_review_reason = SPECIAL_REVIEW_TICKERS.get(ticker)
     top_candidate = candidates[0] if candidates else None
     second_score = candidates[1]["score"] if len(candidates) > 1 else 0.0
@@ -260,6 +294,13 @@ def match_instrument(
         else:
             decision = "SIN_MATCH"
             reason = "Yahoo no devolvió candidatos compatibles."
+    elif (
+        override
+        and canonical_symbol(top_candidate.get("symbol"))
+        == canonical_symbol(override["providerSymbol"])
+    ):
+        decision = "VALIDADO"
+        reason = override["reason"]
     elif forced_review_reason:
         decision = "REVISAR"
         reason = forced_review_reason
@@ -290,4 +331,3 @@ def match_instrument(
         "candidates": candidates,
         "providerErrors": provider_errors,
     }
-

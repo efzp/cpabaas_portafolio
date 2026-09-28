@@ -26,11 +26,16 @@ Los errores externos se informan por tipo sin exponer mensajes internos.
 - Umbral automático: 0.85.
 - Margen mínimo frente al segundo candidato: 0.15.
 - También se exige evidencia fuerte de identidad; un ticker aislado no basta.
-- `PEI`, `PFBCOLOM` y `PFCIBEST` siempre terminan en `REVISAR`.
+- `PFBCOLOM` usa exclusivamente la regla de negocio validada
+  `PFBCOLOM -> CIBEST.CL`; no se infiere una regla general desde este caso.
+- `PEI` se marca `EXCLUIDO` antes de consultar Yahoo porque es un vehículo
+  inmobiliario y no una empresa.
+- `PFCIBEST` se conserva como instrumento independiente y termina en
+  `REVISAR` mientras no exista una validación específica.
 
-## Resultado inicial
+## Resultado validado
 
-La ejecución inicial usó los 11 instrumentos devueltos por el procedimiento y
+La ejecución validada usó los 11 instrumentos devueltos por el procedimiento y
 realizó únicamente consultas de lectura a SQL y Yahoo.
 
 | ID | Ticker | Mejor candidato | Score | Margen | Decisión |
@@ -39,17 +44,19 @@ realizó únicamente consultas de lectura a SQL y Yahoo.
 | 24 | ECOPETROL | ECOPETROL.CL | 0.65 | 0.60 | REVISAR |
 | 25 | GEB | GEB.CL | 0.65 | 0.60 | REVISAR |
 | 26 | CORFICOLCF | CORFICOLCF.CL | 0.65 | 0.65 | REVISAR |
-| 28 | PEI | PEI.CL | 0.65 | 0.60 | REVISAR |
+| 28 | PEI | No aplica | - | - | EXCLUIDO |
 | 30 | MSFTCO | MSFTCO.CL | 0.65 | 0.30 | REVISAR |
 | 39 | PFCIBEST | PFCIBEST.CL | 0.65 | 0.40 | REVISAR |
 | 40 | ISA | ISA.CL | 0.65 | 0.60 | REVISAR |
 | 42 | GOOGL | GOOGL | 0.50 | 0.45 | REVISAR |
 | 44 | TERPEL | TERPEL.CL | 0.65 | 0.65 | REVISAR |
-| 46 | PFBCOLOM | CIB | 0.25 | 0.20 | REVISAR |
+| 46 | PFBCOLOM | CIBEST.CL | 0.90 | 0.90 | VALIDADO |
 
-No hubo errores del proveedor. Los diez resultados `REVISAR` requieren
-validación de negocio antes de cualquier escritura. En particular, debe
-confirmarse la relación histórica entre `PFBCOLOM`, `PFCIBEST` y `CIB`.
+La ejecución posterior a la validación de negocio produjo 1 `AUTOMATICO`, 1
+`VALIDADO`, 1 `EXCLUIDO` y 8 `REVISAR`. No hubo errores del proveedor ni
+escrituras. `PEI` no generó consultas y `PFBCOLOM` solo consultó
+`CIBEST.CL`. Los ocho resultados `REVISAR` requieren validación de negocio
+antes de cualquier escritura.
 
 ## Permiso pendiente
 
@@ -57,4 +64,3 @@ La identidad administrada de la Function aún no tiene `EXECUTE` sobre
 `dbo.sp_InstrumentosPendientesFuente`. El endpoint puede desplegarse y las
 pruebas pueden ejecutarse, pero no funcionará en Azure hasta crear el rol de
 enriquecimiento de mínimo privilegio previsto en el siguiente paso.
-

@@ -84,6 +84,8 @@ class MatchingServiceTests(unittest.TestCase):
         self.assertEqual("DRY_RUN", result["mode"])
         self.assertEqual(0, result["writesPerformed"])
         self.assertEqual(1, result["summary"]["automatico"])
+        self.assertEqual(0, result["summary"]["validado"])
+        self.assertEqual(0, result["summary"]["excluido"])
         self.assertEqual(0, connection.commit_count)
         self.assertTrue(connection.closed)
         statements = [item[0] for item in connection._cursor.executions]
@@ -92,4 +94,3 @@ class MatchingServiceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

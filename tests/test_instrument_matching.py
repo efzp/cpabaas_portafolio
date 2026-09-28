@@ -56,7 +56,7 @@ class InstrumentMatchingTests(unittest.TestCase):
         self.assertEqual("PATRIMONIO AUTONOMO", canonical_text("Patrimonio Autónomo"))
         self.assertEqual(canonical_symbol("BRK.B"), canonical_symbol("brk-b"))
 
-    def test_builds_underlying_mgc_and_historical_queries(self):
+    def test_builds_underlying_mgc_and_business_override_queries(self):
         berkshire = make_instrument(
             TickerNegociacion="BRKB",
             TickerSubyacente="BRK.B",
@@ -71,8 +71,7 @@ class InstrumentMatchingTests(unittest.TestCase):
 
         historical = make_instrument(TickerNegociacion="PFBCOLOM")
         historical_queries = [item.query for item in build_query_plan(historical)]
-        self.assertIn("PFCIBEST", historical_queries)
-        self.assertIn("CIB", historical_queries)
+        self.assertEqual(["CIBEST.CL"], historical_queries)
 
     def test_accepts_strong_underlying_match_with_clear_margin(self):
         instrument = make_instrument(
@@ -103,7 +102,7 @@ class InstrumentMatchingTests(unittest.TestCase):
         self.assertTrue(result["topCandidate"]["strongIdentity"])
         self.assertGreaterEqual(result["scoreMargin"], 0.15)
 
-    def test_forces_pei_to_review_despite_local_symbol(self):
+    def test_excludes_pei_without_calling_provider(self):
         instrument = make_instrument(
             InstrumentoID=28,
             NombreInstrumento="PEI",
@@ -123,23 +122,36 @@ class InstrumentMatchingTests(unittest.TestCase):
 
         result = match_instrument(instrument, client)
 
-        self.assertEqual("REVISAR", result["decision"])
-        self.assertEqual("PEI.CL", result["topCandidate"]["symbol"])
-        self.assertIn("ambiguo", result["reason"])
+        self.assertEqual("EXCLUIDO", result["decision"])
+        self.assertIsNone(result["topCandidate"])
+        self.assertEqual([], result["queries"])
+        self.assertEqual([], client.calls)
+        self.assertIn("no una empresa", result["reason"])
 
-    def test_forces_pfbcolom_historical_symbol_to_review(self):
+    def test_validates_pfbcolom_against_exact_cibest_symbol(self):
         instrument = make_instrument(
             InstrumentoID=46,
             NombreInstrumento="PFBCOLOM",
             TickerNegociacion="PFBCOLOM",
         )
-        client = FakeClient({"CIB": [make_quote("CIB", "Grupo Cibest S.A.", "NYSE")]})
+        client = FakeClient(
+            {
+                "CIBEST.CL": [
+                    make_quote("CIBEST.CL", "Grupo Cibest S.A.", "BVC")
+                ]
+            }
+        )
 
         result = match_instrument(instrument, client)
 
-        self.assertEqual("REVISAR", result["decision"])
-        self.assertIn("histórico", result["reason"])
-        self.assertIn("CIB", result["queries"])
+        self.assertEqual("VALIDADO", result["decision"])
+        self.assertEqual("CIBEST.CL", result["topCandidate"]["symbol"])
+        self.assertEqual(
+            "REGLA_NEGOCIO",
+            result["topCandidate"]["evidence"]["symbolReason"],
+        )
+        self.assertEqual(["CIBEST.CL"], result["queries"])
+        self.assertIn("regla de negocio", result["reason"])
 
     def test_marks_close_candidates_as_ambiguous(self):
         instrument = make_instrument(
@@ -187,4 +199,3 @@ class InstrumentMatchingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
