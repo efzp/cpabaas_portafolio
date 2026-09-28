@@ -18,4 +18,26 @@ integridad del código recuperado están registradas en
 [docs/DEPLOYED_BASELINE.md](docs/DEPLOYED_BASELINE.md).
 
 > Importante: esta línea base reproduce el código recuperado del despliegue. No
-> incorpora todavía modularización ni enriquecimiento financiero.
+> incorpora todavía enriquecimiento financiero.
+
+## Estructura del código
+
+```text
+function_app.py        Disparadores de Azure Functions
+bvc_mgc/parser.py      Lectura y validación del Excel
+bvc_mgc/repository.py  Operaciones SQL del catálogo
+bvc_mgc/service.py     Orquestación de la carga BVC/MGC
+shared/config.py       Configuración desde variables de entorno
+shared/db.py           Apertura de conexiones SQL
+tests/                 Pruebas unitarias de caracterización
+```
+
+La modularización conserva los nombres, rutas, programación y respuestas de
+los disparadores recuperados del despliegue.
+
+## Pruebas
+
+```powershell
+python -m compileall -q function_app.py shared bvc_mgc tests
+python -m unittest discover -s tests -v
+```

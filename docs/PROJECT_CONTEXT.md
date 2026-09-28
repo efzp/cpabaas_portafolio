@@ -107,6 +107,12 @@ El despliegue activo fue publicado el 14 de septiembre de 2026. Su código
 fuente fue recuperado e incorporado como línea base el 28 de septiembre de
 2026. La procedencia y los hashes están en `DEPLOYED_BASELINE.md`.
 
+La línea base fue modularizada localmente el 28 de septiembre de 2026. Los
+disparadores permanecen en `function_app.py`; parser, persistencia y servicio
+BVC/MGC están en `bvc_mgc/`, y configuración/conexión en `shared/`. Trece
+pruebas unitarias verifican el comportamiento principal. Esta versión aún no
+ha sido desplegada en Azure.
+
 ## Modelo SQL y avance
 
 Objetos ya creados que no deben recrearse:
@@ -191,8 +197,9 @@ Orden recomendado:
    el 28 de septiembre de 2026.
 2. Exportar a `sql/` las definiciones vigentes de las tablas, vista y
    procedimientos usados por el proyecto.
-3. Separar acceso SQL, configuración y lógica del cargador BVC/MGC en módulos
-   probables, conservando su comportamiento.
+3. ~~Separar acceso SQL, configuración y lógica del cargador BVC/MGC en
+   módulos comprobables, conservando su comportamiento.~~ Completado el 28 de
+   septiembre de 2026 con 13 pruebas unitarias.
 4. Implementar el servicio de matching Yahoo en modo `dry-run` usando
    `sp_InstrumentosPendientesFuente`.
 5. Añadir pruebas para canonización, generación de candidatos, scoring,
