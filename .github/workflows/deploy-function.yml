@@ -44,7 +44,7 @@ jobs:
         run: |
           mkdir deploy
           cp function_app.py host.json requirements.txt deploy/
-          cp -R bvc_mgc shared deploy/
+          cp -R bvc_mgc instrument_matching shared deploy/
 
       - name: Sign in to Azure with OIDC
         uses: azure/login@v3

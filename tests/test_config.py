@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from shared.config import BvcMgcSettings
+from shared.config import BvcMgcSettings, YahooMatchSettings
 
 
 class BvcMgcSettingsTests(unittest.TestCase):
@@ -26,6 +26,32 @@ class BvcMgcSettingsTests(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaises(KeyError):
                 BvcMgcSettings.from_environment()
+
+
+class YahooMatchSettingsTests(unittest.TestCase):
+    def test_reads_defaults_and_required_sql_connection(self):
+        with patch.dict(
+            os.environ,
+            {"SQL_CONNECTION_STRING": "Authentication=ActiveDirectoryMsi;"},
+            clear=True,
+        ):
+            settings = YahooMatchSettings.from_environment()
+
+        self.assertEqual(8, settings.max_results)
+        self.assertEqual(0.85, settings.automatic_threshold)
+        self.assertEqual(0.15, settings.ambiguity_margin)
+
+    def test_rejects_invalid_threshold(self):
+        with patch.dict(
+            os.environ,
+            {
+                "SQL_CONNECTION_STRING": "Authentication=ActiveDirectoryMsi;",
+                "YAHOO_MATCH_AUTOMATIC_THRESHOLD": "1.5",
+            },
+            clear=True,
+        ):
+            with self.assertRaisesRegex(ValueError, "entre 0 y 1"):
+                YahooMatchSettings.from_environment()
 
 
 if __name__ == "__main__":

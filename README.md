@@ -28,6 +28,7 @@ function_app.py        Disparadores de Azure Functions
 bvc_mgc/parser.py      Lectura y validación del Excel
 bvc_mgc/repository.py  Operaciones SQL del catálogo
 bvc_mgc/service.py     Orquestación de la carga BVC/MGC
+instrument_matching/   Matching Yahoo conservador y auditable
 shared/config.py       Configuración desde variables de entorno
 shared/db.py           Apertura de conexiones SQL
 tests/                 Pruebas unitarias de caracterización
@@ -37,6 +38,12 @@ sql/                   Línea base de los objetos críticos de Azure SQL
 
 La modularización conserva los nombres, rutas, programación y respuestas de
 los disparadores recuperados del despliegue.
+
+## Matching Yahoo dry-run
+
+El endpoint `POST /api/instrumentos/matching/yahoo/dry-run` propone símbolos de
+Yahoo sin escribir en SQL. Su diseño, criterios y primera ejecución están en
+[docs/YAHOO_MATCHING_DRY_RUN.md](docs/YAHOO_MATCHING_DRY_RUN.md).
 
 ## Pruebas
 

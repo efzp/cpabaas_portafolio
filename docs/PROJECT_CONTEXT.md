@@ -87,11 +87,14 @@ la validación.
 
 ## Azure Function verificada
 
-La Function desplegada todavía no es el servicio de enriquecimiento. Es un
-cargador del catálogo BVC/MGC con dos disparadores:
+La Function contiene el cargador del catálogo BVC/MGC y una primera versión
+controlada del matching Yahoo. Sus disparadores son:
 
 - `CargarBvcMgcManual`: HTTP POST con autenticación de nivel Function.
 - `CargarBvcMgcMensual`: `0 0 11 1 * *`, primer día del mes a las 11:00 UTC.
+- `YahooMatchingDryRun`: HTTP POST con autenticación de nivel Function y ruta
+  `instrumentos/matching/yahoo/dry-run`; produce candidatos auditables sin
+  escribir en SQL.
 
 El código descarga un XLSX, normaliza y valida sus filas, usa staging, controla
 duplicados por SHA-256, detecta caídas superiores al 20 %, actualiza el catálogo
@@ -113,6 +116,11 @@ en `bvc_mgc/`, y configuración/conexión en `shared/`. Trece pruebas unitarias
 verifican el comportamiento principal. Esta versión fue desplegada con éxito
 en Azure mediante GitHub Actions y OIDC. El workflow también quedó habilitado
 para validar y desplegar cambios enviados a `main`.
+
+El matching Yahoo en modo `dry-run` se implementó el 28 de septiembre de 2026.
+La primera ejecución de lectura evaluó 11 instrumentos: BRKB obtuvo propuesta
+automática `BRK-B`, y los otros 10 quedaron en `REVISAR`. No hubo errores del
+proveedor ni escrituras. El detalle está en `YAHOO_MATCHING_DRY_RUN.md`.
 
 ## Modelo SQL y avance
 
@@ -163,6 +171,11 @@ Actualmente pertenece al rol `bvc_mgc_loader`, limitado a `SELECT`, `INSERT` y
 No tiene todavía `EXECUTE` sobre los procedimientos de enriquecimiento. No se
 deben asignar `db_owner`, `db_datareader` ni `db_datawriter`.
 
+Por esa razón, el endpoint `YahooMatchingDryRun` no puede ejecutarse todavía
+con la identidad de la Function en Azure, aunque el código y sus pruebas estén
+desplegados. El próximo cambio de seguridad debe limitarse a `EXECUTE` sobre
+`sp_InstrumentosPendientesFuente`; la escritura seguirá deshabilitada.
+
 ## Decisiones y restricciones
 
 - Preservar siempre `Instrumento.TickerNegociacion`.
@@ -210,10 +223,11 @@ Orden recomendado:
    módulos comprobables, conservando su comportamiento.~~ Completado el 28 de
    septiembre de 2026 con 13 pruebas unitarias y desplegado mediante GitHub
    Actions.
-4. Implementar el servicio de matching Yahoo en modo `dry-run` usando
-   `sp_InstrumentosPendientesFuente`.
-5. Añadir pruebas para canonización, generación de candidatos, scoring,
-   ambigüedad y casos PEI/PFBCOLOM.
+4. ~~Implementar el servicio de matching Yahoo en modo `dry-run` usando
+   `sp_InstrumentosPendientesFuente`.~~ Completado el 28 de septiembre de 2026.
+5. ~~Añadir pruebas para canonización, generación de candidatos, scoring,
+   ambigüedad y casos PEI/PFBCOLOM.~~ Completado con una suite total de 26
+   pruebas.
 6. Revisar manualmente los resultados del `dry-run` para los instrumentos
    actualmente presentes en `PosicionMensual`.
 7. Crear un rol específico de enriquecimiento y conceder únicamente `EXECUTE`
